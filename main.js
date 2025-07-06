@@ -105,10 +105,10 @@ const registerUser = async (event) => {
         const transaction = db.transaction(['users'], 'readwrite');
         const store = transaction.objectStore('users');
         await store.add(formData);
-        alert('Registration successful! Please login.');
+        alert('Registro exitoso ! Porvfavor, inicie la sesión.');
         showLoginForm();
     } catch (error) {
-        alert('Registration failed: ' + error);
+        alert('Registro fallido: ' + error);
     }
 };
 
@@ -127,10 +127,10 @@ const loginUser = async (event) => {
             currentUser = user;
             showMainApp();
         } else {
-            alert('Invalid credentials or account is blocked');
+            alert('Credenciales inválidos o la cuenta está bloqueada');
         }
     } catch (error) {
-        alert('Login failed: ' + error);
+        alert('Error al iniciar la sesión: ' + error);
     }
 };
 
@@ -184,10 +184,10 @@ const uploadMedia = async (event) => {
         const transaction = db.transaction(['media'], 'readwrite');
         const store = transaction.objectStore('media');
         await store.add(mediaData);
-        alert('Upload successful!');
+        alert('Archivo subido con éxito!');
         loadGallery();
     } catch (error) {
-        alert('Upload failed: ' + error);
+        alert('Fallo al subir el archivo!: ' + error);
     }
 };
 
@@ -350,7 +350,7 @@ const createVideoElement = (data) => {
 };
 
 const deleteMedia = async (mediaId) => {
-    if (!confirm('Are you sure you want to delete this media?')) return;
+    if (!confirm('Estás seguro que quieres eliminar este elemento?')) return;
     
     try {
         const transaction = db.transaction(['media'], 'readwrite');
@@ -358,7 +358,7 @@ const deleteMedia = async (mediaId) => {
         await store.delete(mediaId);
         loadGallery();
     } catch (error) {
-        alert('Failed to delete media: ' + error);
+        alert('Error al eliminar elemento: ' + error);
     }
 };
 
