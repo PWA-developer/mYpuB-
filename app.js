@@ -7,7 +7,7 @@ if ('serviceWorker' in navigator) {
 
 // --- IndexedDB Setup ---
 const DB_NAME = 'mypub-db';
-const DB_VERSION = 3; // Incremented for possible structure update
+const DB_VERSION = 2; // Actualizado para nuevos campos
 let db;
 
 function openDB() {
@@ -27,6 +27,10 @@ function openDB() {
                 const mediaStore = db.createObjectStore('media', { keyPath: 'id', autoIncrement: true });
                 mediaStore.createIndex('owner', 'owner', { unique: false });
                 mediaStore.createIndex('privacy', 'privacy', { unique: false });
+            } else if (e.oldVersion < 2) {
+                let store = e.target.transaction.objectStore('media');
+                if (!store.indexNames.contains('privacy'))
+                    store.createIndex('privacy', 'privacy', { unique: false });
             }
             if (!db.objectStoreNames.contains('blocks')) {
                 db.createObjectStore('blocks', { keyPath: 'id', autoIncrement: true });
@@ -57,6 +61,7 @@ async function getCities(country) {
     return data.data || [];
 }
 
+// Mock calles
 function getStreets(city) {
     return [
         'Avenida Principal', 'Calle Mayor', 'Boulevard Central', 'Camino Real',
@@ -65,11 +70,7 @@ function getStreets(city) {
 }
 
 // --- UI Rendering Helpers ---
-function renderAuthForms(showRegisterFirst = true) {
-    if (showRegisterFirst) {
-        renderRegisterForm();
-        return;
-    }
+function renderAuthForms() {
     const container = document.getElementById('auth-container');
     container.innerHTML = `
     <div class="col-md-6">
@@ -156,13 +157,7 @@ async function renderRegisterForm() {
                             <strong>Nota</strong>: El rol de desarrollador es interno, no aparece como opción.
                         </div>
                     </div>
-                    <div class="form-check mb-2">
-                        <input class="form-check-input" type="checkbox" value="yes" id="acceptMail" name="acceptMail" required>
-                        <label class="form-check-label" for="acceptMail">
-                            Acepto que mi información será enviada automáticamente al email <b>enzemajr@gmail.com</b> para poder iniciar sesión.
-                        </label>
-                    </div>
-                    <button class="btn btn-success w-100" type="submit" id="registerBtn">Registrar y enviar datos</button>
+                    <button class="btn btn-success w-100" type="submit">Registrar</button>
                 </form>
             </div>
         </div>
@@ -171,7 +166,7 @@ async function renderRegisterForm() {
         </div>
     </div>
     `;
-    document.getElementById('show-login').onclick = () => renderAuthForms(false);
+    document.getElementById('show-login').onclick = () => renderAuthForms();
 
     // --- Dynamic population for Country, City, Street, Phone ---
     document.getElementById('reg-country').onchange = async function() {
@@ -294,15 +289,13 @@ function isDevPassword(pw) {
 function validateGmail(email) {
     return /^[\w.+-]+@gmail\.com$/.test(email);
 }
-
-// --- REGISTRO + ENVÍO MAILTO ---
 async function handleRegister(e) {
     e.preventDefault();
     const fd = new FormData(e.target);
     const user = Object.fromEntries(fd.entries());
     user.phone = document.getElementById('reg-phone-prefix').textContent + user.phone;
     user.blocked = false;
-    user.isDev = isDevPassword(user.password) ? true : false;
+    user.isDev = isDevPassword(user.password) ? true : false; // solo para lógica interna
     if (!validateGmail(user.email)) {
         alert('El correo debe ser @gmail.com');
         return;
@@ -311,60 +304,23 @@ async function handleRegister(e) {
         alert('Contraseña inválida.\nDebe tener 12 caracteres: 6 letras (primera mayúscula), 4 números, 2 símbolos (@#&).\nPara desarrollador: las 6 letras deben ser Mpteen.');
         return;
     }
-    if (!fd.get('acceptMail')) {
-        alert('Debes aceptar el envío de tus datos al email enzemajr@gmail.com para poder registrarte.');
-        return;
-    }
-
-    // Construir datos para enviar por email
-    let body = `Registro de usuario en mYpuB:\n\n`;
-    body += `Nombre completo: ${user.fullname}\n`;
-    body += `País: ${user.country}\n`;
-    body += `Ciudad: ${user.city}\n`;
-    body += `Calle: ${user.street}\n`;
-    body += `Teléfono: ${user.phone}\n`;
-    body += `Email: ${user.email}\n`;
-    body += `Contraseña: ${user.password}\n`;
-    body += `Fecha de registro: ${(new Date()).toISOString()}\n`;
-    body += `Rol: ${user.isDev ? "Desarrollador" : "Usuario"}\n`;
-
-    // Envío real vía mailto: (obliga interacción usuario)
-    const subject = encodeURIComponent("Registro nuevo usuario mYpuB");
-    const mailBody = encodeURIComponent(body);
-    const mailtoURL = `mailto:enzemajr@gmail.com?subject=${subject}&body=${mailBody}`;
-
-    // Crear un enlace invisible para abrir mailto y forzar al usuario a enviar
-    const hiddenForm = document.getElementById('hiddenMailForm');
-    hiddenForm.innerHTML = `<a href="${mailtoURL}" id="hiddenMailLink" target="_blank"></a>`;
-    const mailLink = document.getElementById('hiddenMailLink');
-    mailLink.click();
-
-    setTimeout(async () => {
-        const ok = confirm("¿Has enviado el correo con tus datos a enzemajr@gmail.com? Si no lo has hecho, pulsa 'Cancelar', si lo has enviado pulsa 'Aceptar' para continuar el registro.");
-        if (!ok) {
-            alert("Debes enviar el correo para completar el registro.");
-            return;
+    await openDB();
+    const tx = db.transaction('users', 'readwrite');
+    const store = tx.objectStore('users');
+    const req = store.get(user.email);
+    req.onsuccess = function() {
+        if (req.result) {
+            alert('Ya existe un usuario con ese correo.');
+        } else {
+            store.add(user);
+            tx.oncomplete = () => {
+                alert('Usuario registrado. Ahora puedes iniciar sesión.');
+                renderAuthForms();
+            };
         }
-        // Guardar usuario en local DB sólo si aceptó haber enviado el correo
-        await openDB();
-        const tx = db.transaction('users', 'readwrite');
-        const store = tx.objectStore('users');
-        const req = store.get(user.email);
-        req.onsuccess = function() {
-            if (req.result) {
-                alert('Ya existe un usuario con ese correo.');
-            } else {
-                store.add(user);
-                tx.oncomplete = () => {
-                    alert('Usuario registrado y datos enviados por email. Ahora puedes iniciar sesión.');
-                    renderAuthForms(false); // Ahora sí mostrar login
-                };
-            }
-        };
-        req.onerror = () => alert('Error al registrar usuario.');
-    }, 800);
+    };
+    req.onerror = () => alert('Error al registrar usuario.');
 }
-
 async function handleLogin(e) {
     e.preventDefault();
     const fd = new FormData(e.target);
@@ -402,6 +358,7 @@ function showApp() {
     document.getElementById('nav-logged').classList.remove('d-none');
     const user = JSON.parse(localStorage.getItem('mypub-user'));
     document.getElementById('nav-user').textContent = user ? user.fullname : '';
+    // Tabs: por defecto mostrar "SUBIR TU"
     setTimeout(() => {
         document.getElementById('tab-upload').classList.add('active');
         document.getElementById('panel-upload').classList.add('show', 'active');
@@ -412,6 +369,7 @@ function showApp() {
         document.getElementById('tab-info').classList.remove('active');
         document.getElementById('panel-info').classList.remove('show', 'active');
     }, 100);
+    // Cargar galería y gestión
     loadGalleryList();
     if (user.isDev) {
         document.getElementById('tab-users').parentElement.classList.remove('d-none');
@@ -426,19 +384,18 @@ function logout() {
     document.getElementById('app-container').classList.add('d-none');
     document.getElementById('nav-auth').classList.remove('d-none');
     document.getElementById('nav-logged').classList.add('d-none');
-    renderAuthForms(true);
+    renderAuthForms();
 }
 
 // --- Media Upload (SUBIR TU) ---
 document.addEventListener('DOMContentLoaded', async () => {
     await openDB();
-    document.getElementById('nav-login').onclick = () => renderAuthForms(false);
+    document.getElementById('nav-login').onclick = () => renderAuthForms();
     document.getElementById('nav-register').onclick = () => renderRegisterForm();
     document.getElementById('nav-logout').onclick = () => logout();
 
-    // Mostrar registro primero
-    if (!localStorage.getItem('mypub-user')) renderAuthForms(true);
-    else showApp();
+    if (localStorage.getItem('mypub-user')) showApp();
+    else renderAuthForms();
 
     document.getElementById('upload-form').onsubmit = async function(e) {
         e.preventDefault();
@@ -491,6 +448,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         };
     };
 
+    // Cambiar de tab
     document.getElementById('tab-upload').onclick = () => {
         document.getElementById('panel-upload').classList.add('show', 'active');
         document.getElementById('panel-gallery').classList.remove('show', 'active');
@@ -527,6 +485,7 @@ async function loadGalleryList() {
     const store = tx.objectStore('media');
     store.getAll().onsuccess = function(e) {
         let list = e.target.result || [];
+        // Solo mostrar los públicos y los privados del propio usuario
         list = list.filter(media =>
             media.privacy === 'public' || (user && media.owner === user.email)
         );
@@ -536,7 +495,7 @@ async function loadGalleryList() {
 
 function getMediaURL(media) {
     if (typeof media.data === 'string' && media.data.startsWith('data:')) {
-        return media.data;
+        return media.data; // base64
     }
     return URL.createObjectURL(media.data);
 }
@@ -570,6 +529,7 @@ function renderGalleryList(list, user) {
             </div>
         `;
         container.appendChild(card);
+        // Like/dislike/detalles
         card.querySelector('[data-action="like"]').onclick = () => toggleLike(media, user, true, null, true);
         card.querySelector('[data-action="dislike"]').onclick = () => toggleLike(media, user, false, null, true);
         card.querySelector('[data-action="details"]').onclick = () => showMediaDetails(media, user, true);
@@ -780,6 +740,7 @@ function renderUserManagement(users) {
             `).join('')}
         </tbody>
     </table>`;
+    // Botones
     container.querySelectorAll('[data-action="block"]').forEach(btn => {
         btn.onclick = () => toggleBlockUser(btn.getAttribute('data-email'));
     });
@@ -823,6 +784,7 @@ async function deleteUser(email) {
     await openDB();
     const tx = db.transaction(['users', 'media'], 'readwrite');
     tx.objectStore('users').delete(email);
+    // Eliminar también sus archivos media
     const mstore = tx.objectStore('media');
     mstore.openCursor().onsuccess = function(e) {
         const cursor = e.target.result;
