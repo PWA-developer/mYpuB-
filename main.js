@@ -285,10 +285,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         await loadCountries();
         
         // Navegación de autenticación
-        showRegisterBtn.addEventListener('click', (e) => {
-            e.preventDefault();
-            showRegisterForm();
-        });
+        showRegisterBtn.addEventListener('click', showRegisterForm);  // Cambiado aquí - eliminado el preventDefault y el wrapper function
 
         showLoginBtn.addEventListener('click', (e) => {
             e.preventDefault();
@@ -495,36 +492,3 @@ const toggleUserBlock = async (email) => {
         alert('Error al cambiar estado de bloqueo: ' + error);
     }
 };
-```
-
-## Cambios realizados:
-
-1. **Simplificación del formulario de registro**:
-   - Eliminados los campos de ciudad y calle
-   - Mantenido solo el campo de país como JComboBox
-
-2. **Función `loadCountries` mejorada**:
-   - Obtiene todos los países del mundo desde la API RestCountries
-   - Ordena los países alfabéticamente
-   - Asigna automáticamente el prefijo telefónico al seleccionar un país
-   - Incluye datos de respaldo en caso de fallo en la API
-
-3. **Validación del país**:
-   ```javascript
-   if (!formData.country) {
-       alert('Por favor seleccione un país');
-       return;
-   }
-   ```
-
-4. **Estructura de datos del usuario**:
-   - Ahora solo guarda el país, no ciudad ni calle
-   - El prefijo telefónico se concatena automáticamente al número
-
-5. **Evento change del JComboBox**:
-   ```javascript
-   countrySelect.addEventListener('change', function() {
-       const selectedOption = this.options[this.selectedIndex];
-       document.getElementById('phonePrefix').textContent = selectedOption.dataset.phoneCode || '+';
-   });
-   
