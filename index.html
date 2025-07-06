@@ -1,127 +1,217 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>mYpuB - Almacena tus fotos y videos</title>
+    <title>mYpuB - Media Sharing Platform</title>
+    
+    <!-- PWA Meta Tags -->
+    <meta name="theme-color" content="#ffffff">
     <link rel="manifest" href="manifest.json">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
-    <link rel="stylesheet" href="styles.css">
+    <link rel="apple-touch-icon" href="icons/icon-192x192.png">
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Custom CSS -->
+    <style>
+        .hidden {
+            display: none;
+        }
+        .media-card {
+            margin-bottom: 20px;
+        }
+        .media-preview {
+            max-width: 100%;
+            height: auto;
+        }
+    </style>
 </head>
-<body class="bg-light">
-
-    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
-        <div class="container-fluid">
-            <a class="navbar-brand" href="#">mYpuB</a>
-            <div class="collapse navbar-collapse justify-content-end">
-                <ul class="navbar-nav" id="nav-auth">
-                    <li class="nav-item">
-                        <a class="nav-link" href="#" id="nav-login">Iniciar sesión</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="#" id="nav-register">Registrarse</a>
-                    </li>
-                </ul>
-                <ul class="navbar-nav d-none" id="nav-logged">
-                    <li class="nav-item">
-                        <span class="nav-link" id="nav-user"></span>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="#" id="nav-logout">Cerrar sesión</a>
-                    </li>
-                </ul>
-            </div>
+<body>
+    <!-- Authentication Forms -->
+    <div id="authForms" class="container mt-5">
+        <!-- Login Form -->
+        <div id="loginForm">
+            <h2>Login to mYpuB</h2>
+            <form id="login">
+                <div class="mb-3">
+                    <input type="email" class="form-control" id="loginEmail" placeholder="Gmail" required>
+                </div>
+                <div class="mb-3">
+                    <input type="password" class="form-control" id="loginPassword" placeholder="Password" required>
+                </div>
+                <button type="submit" class="btn btn-primary">Login</button>
+                <button type="button" class="btn btn-link" id="showRegister">Register</button>
+            </form>
         </div>
-    </nav>
 
-    <main class="container py-4">
-        <!-- Auth Forms -->
-        <div id="auth-container" class="row justify-content-center"></div>
-        
-        <!-- Main App (Panel Principal) -->
-        <div id="app-container" class="d-none">
-            <ul class="nav nav-tabs mb-4" id="main-tabs">
-                <li class="nav-item">
-                    <a class="nav-link active" id="tab-upload" data-bs-toggle="tab" href="#panel-upload">SUBIR TU</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" id="tab-gallery" data-bs-toggle="tab" href="#panel-gallery">GALERÍA</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" id="tab-users" data-bs-toggle="tab" href="#panel-users">GESTIÓN DE USUARIOS</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" id="tab-info" data-bs-toggle="tab" href="#panel-info">INFÓRMATE</a>
-                </li>
-            </ul>
-            <div class="tab-content">
-                <!-- SUBIR TU -->
-                <div class="tab-pane fade show active" id="panel-upload">
-                    <h2 class="mb-4">Sube tus fotos y videos</h2>
-                    <form id="upload-form" class="mb-4">
-                        <div class="mb-3">
-                            <input type="file" class="form-control" id="media-file" accept="image/*,video/*" multiple required>
-                        </div>
-                        <div class="mb-3">
-                            <label>Privacidad:</label>
-                            <select id="media-privacy" class="form-select" required>
-                                <option value="public">Público (visible, comentable, descargable por todos)</option>
-                                <option value="private">Privado (solo visible para otros usuarios)</option>
-                            </select>
-                        </div>
-                        <button type="submit" class="btn btn-success">Subir</button>
-                    </form>
+        <!-- Registration Form -->
+        <div id="registerForm" class="hidden">
+            <h2>Create Account</h2>
+            <form id="register">
+                <div class="mb-3">
+                    <input type="text" class="form-control" id="fullName" placeholder="Full Name" required>
                 </div>
-                <!-- GALERÍA -->
-                <div class="tab-pane fade" id="panel-gallery">
-                    <h2 class="mb-4">Galería de imágenes y vídeos</h2>
-                    <div id="gallery-list" class="row g-3"></div>
+                <div class="mb-3">
+                    <select class="form-select" id="country" required>
+                        <option value="">Select Country</option>
+                    </select>
                 </div>
-                <!-- GESTIÓN DE USUARIOS (solo visible para desarrollador) -->
-                <div class="tab-pane fade" id="panel-users">
-                    <h2 class="mb-4">Gestión de usuarios</h2>
-                    <div id="users-list"></div>
+                <div class="mb-3">
+                    <select class="form-select" id="city" required disabled>
+                        <option value="">Select City</option>
+                    </select>
                 </div>
-                <!-- INFÓRMATE -->
-                <div class="tab-pane fade" id="panel-info">
-                    <h2>Información sobre la aplicación</h2>
-                    <div class="card mt-3">
-                        <div class="card-body">
-                            <p>
-                                <b>mYpuB</b> es una aplicación web progresiva para subir, compartir y gestionar imágenes y vídeos.<br>
-                                <b>¿Para qué sirve?</b><br>
-                                Permite que cualquier usuario suba imágenes o vídeos y decida si desea compartirlos públicamente (comentable, descargable por todos los usuarios) o mantenerlos privados.<br>
-                                <b>¿Cómo utilizarla?</b><br>
-                                1. Regístrate usando un correo de Gmail y una contraseña segura.<br>
-                                2. Sube tus imágenes o vídeos desde el módulo "SUBIR TU".<br>
-                                3. Visualiza y descarga los archivos compartidos en "GALERÍA".<br>
-                                4. Los administradores/desarrolladores pueden gestionar usuarios y contenidos.<br>
-                                <b>Desarrollador:</b><br>
-                                Nombre completo: <b>Tarciano ENZEMA NCHAMA</b><br>
-                                Formación académica: Finalista universitario de la UNGE<br>
-                                Facultad: Ciencias económicas gestión y administración<br>
-                                Departamento: Informática de gestión empresarial<br>
-                                Contacto: <a href="mailto:enzemajr@gmail.com">enzemajr@gmail.com</a><br>
-                                Fecha final del desarrollo: 06/07/2025
-                            </p>
-                        </div>
+                <div class="mb-3">
+                    <select class="form-select" id="street" required disabled>
+                        <option value="">Select Street</option>
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <div class="input-group">
+                        <span class="input-group-text" id="phonePrefix">+</span>
+                        <input type="tel" class="form-control" id="phone" required>
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <input type="email" class="form-control" id="registerEmail" placeholder="Gmail" required>
+                </div>
+                <div class="mb-3">
+                    <input type="password" class="form-control" id="registerPassword" 
+                           placeholder="Password (6 letters, 4 numbers, 2 symbols)" required>
+                    <div id="passwordHelp" class="form-text">
+                        Must contain 6 letters (first uppercase), 4 numbers, and 2 symbols (@,#,&)
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-primary">Register</button>
+                <button type="button" class="btn btn-link" id="showLogin">Back to Login</button>
+                <button type="button" class="btn btn-info" id="helpButton">Help</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Main Application -->
+    <div id="mainApp" class="hidden">
+        <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+            <div class="container-fluid">
+                <a class="navbar-brand" href="#">mYpuB</a>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                <div class="collapse navbar-collapse" id="navbarNav">
+                    <ul class="navbar-nav">
+                        <li class="nav-item">
+                            <a class="nav-link" href="#" id="uploadNav">SUBIR TU</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#" id="galleryNav">GALERÍA</a>
+                        </li>
+                        <li class="nav-item developer-only hidden">
+                            <a class="nav-link" href="#" id="userManagementNav">GESTIÓN DE USUARIOS</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#" id="infoNav">INFÓRMATE</a>
+                        </li>
+                    </ul>
+                    <button class="btn btn-light ms-auto" id="logoutBtn">Logout</button>
+                </div>
+            </div>
+        </nav>
+
+        <!-- Content Sections -->
+        <div class="container mt-4">
+            <!-- Upload Section -->
+            <div id="uploadSection" class="section">
+                <h3>Upload Media</h3>
+                <form id="uploadForm">
+                    <div class="mb-3">
+                        <input type="file" class="form-control" id="mediaFile" accept="image/*,video/*" required>
+                    </div>
+                    <div class="form-check mb-3">
+                        <input type="checkbox" class="form-check-input" id="isPublic">
+                        <label class="form-check-label" for="isPublic">Make Public</label>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Upload</button>
+                </form>
+            </div>
+
+            <!-- Gallery Section -->
+            <div id="gallerySection" class="section hidden">
+                <h3>Gallery</h3>
+                <div id="mediaGrid" class="row"></div>
+            </div>
+
+            <!-- User Management Section -->
+            <div id="userManagementSection" class="section hidden">
+                <h3>User Management</h3>
+                <div id="userList" class="list-group"></div>
+            </div>
+
+            <!-- Info Section -->
+            <div id="infoSection" class="section hidden">
+                <h3>About mYpuB</h3>
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title">Developer Information</h5>
+                        <p><strong>Name:</strong> Tarciano ENZEMA NCHAMA</p>
+                        <p><strong>Education:</strong> UNGE University Graduate</p>
+                        <p><strong>Faculty:</strong> Faculty of Economics, Management and Administration</p>
+                        <p><strong>Department:</strong> Business IT Management</p>
+                        <p><strong>Contact:</strong> enzemajr@gmail.com</p>
+                        <p><strong>Development Completion:</strong> 06/07/2025</p>
                     </div>
                 </div>
             </div>
-            <!-- Aquí van los modals globales como detalles de media, ayuda, etc -->
         </div>
+    </div>
 
-        <!-- Panel de ayuda Modal -->
-        <div class="modal fade" id="helpModal" tabindex="-1" aria-labelledby="helpModalLabel" aria-hidden="true">
-          <div class="modal-dialog">
-            <div class="modal-content" id="help-modal-content">
-              <!-- Se llena dinámicamente -->
+    <!-- Help Modal -->
+    <div class="modal fade" id="helpModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Need Help?</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <button class="btn btn-primary mb-2 w-100" id="whatsappInstructions">
+                        Get Instructions via WhatsApp
+                    </button>
+                    <button class="btn btn-secondary w-100" id="whatsappConsultation">
+                        Ask for Consultation
+                    </button>
+                </div>
             </div>
-          </div>
         </div>
-    </main>
+    </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="app.js"></script>
+    <!-- WhatsApp Contact Form Modal -->
+    <div class="modal fade" id="whatsappModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="whatsappModalTitle">Contact via WhatsApp</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="whatsappForm">
+                        <div class="mb-3">
+                            <input type="text" class="form-control" id="whatsappName" placeholder="Full Name" required>
+                        </div>
+                        <div class="mb-3">
+                            <input type="tel" class="form-control" id="whatsappNumber" placeholder="WhatsApp Number" required>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Send</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap and Dependencies -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Main Application Script -->
+    <script src="main.js"></script>
 </body>
 </html>
