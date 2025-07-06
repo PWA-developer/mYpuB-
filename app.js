@@ -7,7 +7,7 @@ if ('serviceWorker' in navigator) {
 
 // --- IndexedDB Setup ---
 const DB_NAME = 'mypub-db';
-const DB_VERSION = 2;
+const DB_VERSION = 3; // Incremented for possible structure update
 let db;
 
 function openDB() {
@@ -27,10 +27,6 @@ function openDB() {
                 const mediaStore = db.createObjectStore('media', { keyPath: 'id', autoIncrement: true });
                 mediaStore.createIndex('owner', 'owner', { unique: false });
                 mediaStore.createIndex('privacy', 'privacy', { unique: false });
-            } else if (e.oldVersion < 2) {
-                let store = e.target.transaction.objectStore('media');
-                if (!store.indexNames.contains('privacy'))
-                    store.createIndex('privacy', 'privacy', { unique: false });
             }
             if (!db.objectStoreNames.contains('blocks')) {
                 db.createObjectStore('blocks', { keyPath: 'id', autoIncrement: true });
@@ -69,7 +65,11 @@ function getStreets(city) {
 }
 
 // --- UI Rendering Helpers ---
-function renderAuthForms() {
+function renderAuthForms(showRegisterFirst = true) {
+    if (showRegisterFirst) {
+        renderRegisterForm();
+        return;
+    }
     const container = document.getElementById('auth-container');
     container.innerHTML = `
     <div class="col-md-6">
@@ -171,7 +171,7 @@ async function renderRegisterForm() {
         </div>
     </div>
     `;
-    document.getElementById('show-login').onclick = () => renderAuthForms();
+    document.getElementById('show-login').onclick = () => renderAuthForms(false);
 
     // --- Dynamic population for Country, City, Street, Phone ---
     document.getElementById('reg-country').onchange = async function() {
@@ -340,7 +340,6 @@ async function handleRegister(e) {
     mailLink.click();
 
     setTimeout(async () => {
-        // Confirmar si el usuario envió realmente el email (no se puede detectar 100% pero se fuerza la acción)
         const ok = confirm("¿Has enviado el correo con tus datos a enzemajr@gmail.com? Si no lo has hecho, pulsa 'Cancelar', si lo has enviado pulsa 'Aceptar' para continuar el registro.");
         if (!ok) {
             alert("Debes enviar el correo para completar el registro.");
@@ -358,7 +357,7 @@ async function handleRegister(e) {
                 store.add(user);
                 tx.oncomplete = () => {
                     alert('Usuario registrado y datos enviados por email. Ahora puedes iniciar sesión.');
-                    renderAuthForms();
+                    renderAuthForms(false); // Ahora sí mostrar login
                 };
             }
         };
@@ -427,18 +426,19 @@ function logout() {
     document.getElementById('app-container').classList.add('d-none');
     document.getElementById('nav-auth').classList.remove('d-none');
     document.getElementById('nav-logged').classList.add('d-none');
-    renderAuthForms();
+    renderAuthForms(true);
 }
 
 // --- Media Upload (SUBIR TU) ---
 document.addEventListener('DOMContentLoaded', async () => {
     await openDB();
-    document.getElementById('nav-login').onclick = () => renderAuthForms();
+    document.getElementById('nav-login').onclick = () => renderAuthForms(false);
     document.getElementById('nav-register').onclick = () => renderRegisterForm();
     document.getElementById('nav-logout').onclick = () => logout();
 
-    if (localStorage.getItem('mypub-user')) showApp();
-    else renderAuthForms();
+    // Mostrar registro primero
+    if (!localStorage.getItem('mypub-user')) renderAuthForms(true);
+    else showApp();
 
     document.getElementById('upload-form').onsubmit = async function(e) {
         e.preventDefault();
