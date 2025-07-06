@@ -1,9 +1,12 @@
+
+
+```html
 <!DOCTYPE html>
-<html lang="en">
+<html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>mYpuB - Media Sharing Platform</title>
+    <title>mYpuB - Plataforma para Compartir Medios</title>
     
     <!-- PWA Meta Tags -->
     <meta name="theme-color" content="#ffffff">
@@ -28,69 +31,69 @@
     </style>
 </head>
 <body>
-    <!-- Authentication Forms -->
+    <!-- Formularios de Autenticación -->
     <div id="authForms" class="container mt-5">
-        <!-- Login Form -->
+        <!-- Formulario de Inicio de Sesión -->
         <div id="loginForm">
-            <h2>Login to mYpuB</h2>
+            <h2>Iniciar Sesión en mYpuB</h2>
             <form id="login">
                 <div class="mb-3">
-                    <input type="email" class="form-control" id="loginEmail" placeholder="Gmail" required>
+                    <input type="email" class="form-control" id="loginEmail" placeholder="Correo electrónico" required>
                 </div>
                 <div class="mb-3">
-                    <input type="password" class="form-control" id="loginPassword" placeholder="Password" required>
+                    <input type="password" class="form-control" id="loginPassword" placeholder="Contraseña" required>
                 </div>
-                <button type="submit" class="btn btn-primary">Login</button>
-                <button type="button" class="btn btn-link" id="showRegister">Register</button>
+                <button type="submit" class="btn btn-primary">Iniciar sesión</button>
+                <button type="button" class="btn btn-link" id="showRegister">Registrarse</button>
             </form>
         </div>
 
-        <!-- Registration Form -->
+        <!-- Formulario de Registro -->
         <div id="registerForm" class="hidden">
-            <h2>Create Account</h2>
+            <h2>Crear Cuenta</h2>
             <form id="register">
                 <div class="mb-3">
-                    <input type="text" class="form-control" id="fullName" placeholder="Full Name" required>
+                    <input type="text" class="form-control" id="fullName" placeholder="Nombre completo" required>
                 </div>
                 <div class="mb-3">
                     <select class="form-select" id="country" required>
-                        <option value="">Select Country</option>
+                        <option value="">Seleccionar país</option>
                     </select>
                 </div>
                 <div class="mb-3">
                     <select class="form-select" id="city" required disabled>
-                        <option value="">Select City</option>
+                        <option value="">Seleccionar ciudad</option>
                     </select>
                 </div>
                 <div class="mb-3">
                     <select class="form-select" id="street" required disabled>
-                        <option value="">Select Street</option>
+                        <option value="">Seleccionar calle</option>
                     </select>
                 </div>
                 <div class="mb-3">
                     <div class="input-group">
                         <span class="input-group-text" id="phonePrefix">+</span>
-                        <input type="tel" class="form-control" id="phone" required>
+                        <input type="tel" class="form-control" id="phone" placeholder="Número de teléfono" required>
                     </div>
                 </div>
                 <div class="mb-3">
-                    <input type="email" class="form-control" id="registerEmail" placeholder="Gmail" required>
+                    <input type="email" class="form-control" id="registerEmail" placeholder="Correo electrónico" required>
                 </div>
                 <div class="mb-3">
                     <input type="password" class="form-control" id="registerPassword" 
-                           placeholder="Password (6 letters, 4 numbers, 2 symbols)" required>
+                           placeholder="Contraseña (6 letras, 4 números, 2 símbolos)" required>
                     <div id="passwordHelp" class="form-text">
-                        Must contain 6 letters (first uppercase), 4 numbers, and 2 symbols (@,#,&)
+                        Debe contener 6 letras (primera mayúscula), 4 números y 2 símbolos (@,#,&)
                     </div>
                 </div>
-                <button type="submit" class="btn btn-primary">Register</button>
-                <button type="button" class="btn btn-link" id="showLogin">Back to Login</button>
-                <button type="button" class="btn btn-info" id="helpButton">Help</button>
+                <button type="submit" class="btn btn-primary">Registrarse</button>
+                <button type="button" class="btn btn-link" id="showLogin">Volver a Iniciar sesión</button>
+                <button type="button" class="btn btn-info" id="helpButton">Ayuda</button>
             </form>
         </div>
     </div>
 
-    <!-- Main Application -->
+    <!-- Aplicación Principal -->
     <div id="mainApp" class="hidden">
         <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
             <div class="container-fluid">
@@ -101,7 +104,7 @@
                 <div class="collapse navbar-collapse" id="navbarNav">
                     <ul class="navbar-nav">
                         <li class="nav-item">
-                            <a class="nav-link" href="#" id="uploadNav">SUBIR TU</a>
+                            <a class="nav-link" href="#" id="uploadNav">SUBIR</a>
                         </li>
                         <li class="nav-item">
                             <a class="nav-link" href="#" id="galleryNav">GALERÍA</a>
@@ -110,108 +113,109 @@
                             <a class="nav-link" href="#" id="userManagementNav">GESTIÓN DE USUARIOS</a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="#" id="infoNav">INFÓRMATE</a>
+                            <a class="nav-link" href="#" id="infoNav">INFORMACIÓN</a>
                         </li>
                     </ul>
-                    <button class="btn btn-light ms-auto" id="logoutBtn">Logout</button>
+                    <button class="btn btn-light ms-auto" id="logoutBtn">Cerrar sesión</button>
                 </div>
             </div>
         </nav>
 
-        <!-- Content Sections -->
+        <!-- Secciones de Contenido -->
         <div class="container mt-4">
-            <!-- Upload Section -->
+            <!-- Sección de Subida -->
             <div id="uploadSection" class="section">
-                <h3>Upload Media</h3>
+                <h3>Subir Medios</h3>
                 <form id="uploadForm">
                     <div class="mb-3">
                         <input type="file" class="form-control" id="mediaFile" accept="image/*,video/*" required>
                     </div>
                     <div class="form-check mb-3">
                         <input type="checkbox" class="form-check-input" id="isPublic">
-                        <label class="form-check-label" for="isPublic">Make Public</label>
+                        <label class="form-check-label" for="isPublic">Hacer público</label>
                     </div>
-                    <button type="submit" class="btn btn-primary">Upload</button>
+                    <button type="submit" class="btn btn-primary">Subir</button>
                 </form>
             </div>
 
-            <!-- Gallery Section -->
+            <!-- Sección de Galería -->
             <div id="gallerySection" class="section hidden">
-                <h3>Gallery</h3>
+                <h3>Galería</h3>
                 <div id="mediaGrid" class="row"></div>
             </div>
 
-            <!-- User Management Section -->
+            <!-- Sección de Gestión de Usuarios -->
             <div id="userManagementSection" class="section hidden">
-                <h3>User Management</h3>
+                <h3>Gestión de Usuarios</h3>
                 <div id="userList" class="list-group"></div>
             </div>
 
-            <!-- Info Section -->
+            <!-- Sección de Información -->
             <div id="infoSection" class="section hidden">
-                <h3>About mYpuB</h3>
+                <h3>Acerca de mYpuB</h3>
                 <div class="card">
                     <div class="card-body">
-                        <h5 class="card-title">Developer Information</h5>
-                        <p><strong>Name:</strong> Tarciano ENZEMA NCHAMA</p>
-                        <p><strong>Education:</strong> UNGE University Graduate</p>
-                        <p><strong>Faculty:</strong> Faculty of Economics, Management and Administration</p>
-                        <p><strong>Department:</strong> Business IT Management</p>
-                        <p><strong>Contact:</strong> enzemajr@gmail.com</p>
-                        <p><strong>Development Completion:</strong> 06/07/2025</p>
+                        <h5 class="card-title">Información del Desarrollador</h5>
+                        <p><strong>Nombre:</strong> Tarciano ENZEMA NCHAMA</p>
+                        <p><strong>Educación:</strong> Graduado de la Universidad UNGE</p>
+                        <p><strong>Facultad:</strong> Facultad de Economía, Gestión y Administración</p>
+                        <p><strong>Departamento:</strong> Gestión de TI para Negocios</p>
+                        <p><strong>Contacto:</strong> enzemajr@gmail.com</p>
+                        <p><strong>Fecha de Finalización:</strong> 06/07/2025</p>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Help Modal -->
+    <!-- Modal de Ayuda -->
     <div class="modal fade" id="helpModal" tabindex="-1">
         <div class="modal-dialog">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title">Need Help?</h5>
+                    <h5 class="modal-title">¿Necesitas Ayuda?</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
                     <button class="btn btn-primary mb-2 w-100" id="whatsappInstructions">
-                        Get Instructions via WhatsApp
+                        Obtener instrucciones por WhatsApp
                     </button>
                     <button class="btn btn-secondary w-100" id="whatsappConsultation">
-                        Ask for Consultation
+                        Solicitar consulta
                     </button>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- WhatsApp Contact Form Modal -->
+    <!-- Modal de Formulario de Contacto por WhatsApp -->
     <div class="modal fade" id="whatsappModal" tabindex="-1">
         <div class="modal-dialog">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title" id="whatsappModalTitle">Contact via WhatsApp</h5>
+                    <h5 class="modal-title" id="whatsappModalTitle">Contactar por WhatsApp</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
                     <form id="whatsappForm">
                         <div class="mb-3">
-                            <input type="text" class="form-control" id="whatsappName" placeholder="Full Name" required>
+                            <input type="text" class="form-control" id="whatsappName" placeholder="Nombre completo" required>
                         </div>
                         <div class="mb-3">
-                            <input type="tel" class="form-control" id="whatsappNumber" placeholder="WhatsApp Number" required>
+                            <input type="tel" class="form-control" id="whatsappNumber" placeholder="Número de WhatsApp" required>
                         </div>
-                        <button type="submit" class="btn btn-primary">Send</button>
+                        <button type="submit" class="btn btn-primary">Enviar</button>
                     </form>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Bootstrap and Dependencies -->
+    <!-- Bootstrap y Dependencias -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     
-    <!-- Main Application Script -->
+    <!-- Script Principal de la Aplicación -->
     <script src="main.js"></script>
 </body>
 </html>
+```
