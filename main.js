@@ -140,27 +140,27 @@ const loginUser = async (event) => {
 
 // Navegación de la interfaz
 const showLoginForm = () => {
-    loginForm.classList.remove('hidden');
-    registerForm.classList.add('hidden');
+    loginForm.style.display = 'block';
+    registerForm.style.display = 'none';
 };
 
 const showRegisterForm = () => {
-    loginForm.classList.add('hidden');
-    registerForm.classList.remove('hidden');
+    loginForm.style.display = 'none';
+    registerForm.style.display = 'block';
 };
 
 const showMainApp = () => {
-    authForms.classList.add('hidden');
-    mainApp.classList.remove('hidden');
+    authForms.style.display = 'none';
+    mainApp.style.display = 'block';
     if (currentUser.isDeveloper) {
-        userManagementNav.parentElement.classList.remove('hidden');
+        userManagementNav.parentElement.style.display = 'block';
     }
     showSection('uploadSection');
 };
 
 const showSection = (sectionId) => {
-    Object.values(sections).forEach(section => section.classList.add('hidden'));
-    sections[sectionId].classList.remove('hidden');
+    Object.values(sections).forEach(section => section.style.display = 'none');
+    sections[sectionId].style.display = 'block';
 };
 
 // Manejo de medios
@@ -284,10 +284,16 @@ document.addEventListener('DOMContentLoaded', async () => {
         await initDB();
         await loadCountries();
         
-        // Navegación de autenticación
-        showRegisterBtn.addEventListener('click', showRegisterForm);  // Cambiado aquí - eliminado el preventDefault y el wrapper function
+        // Mostrar formulario de login por defecto
+        showLoginForm();
+        
+        // Navegación de autenticación - CORRECCIÓN PRINCIPAL AQUÍ
+        showRegisterBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            showRegisterForm();
+        });
 
-        showLoginBtn.addEventListener('click', (e) => {
+        showLoginBtn.addEventListener('click', function(e) {
             e.preventDefault();
             showLoginForm();
         });
@@ -337,8 +343,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         
         logoutBtn.addEventListener('click', () => {
             currentUser = null;
-            mainApp.classList.add('hidden');
-            authForms.classList.remove('hidden');
+            mainApp.style.display = 'none';
+            authForms.style.display = 'block';
             showLoginForm();
         });
     } catch (error) {
