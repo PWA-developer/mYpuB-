@@ -1,30 +1,39 @@
-// IndexedDB Configuration
+
+
+```javascript
+// Configuración de IndexedDB
 const dbName = 'mYpuBDB';
 const dbVersion = 1;
 let db;
 
-// Initialize IndexedDB
+// Inicializar IndexedDB
 const initDB = () => {
     return new Promise((resolve, reject) => {
         const request = indexedDB.open(dbName, dbVersion);
 
-        request.onerror = (event) => reject('Database error: ' + event.target.error);
+        request.onerror = (event) => reject('Error en la base de datos: ' + event.target.error);
 
         request.onupgradeneeded = (event) => {
             const db = event.target.result;
             
-            // Users store
+            // Almacén de usuarios
             if (!db.objectStoreNames.contains('users')) {
                 const userStore = db.createObjectStore('users', { keyPath: 'email' });
                 userStore.createIndex('fullName', 'fullName', { unique: false });
                 userStore.createIndex('isBlocked', 'isBlocked', { unique: false });
             }
 
-            // Media store
+            // Almacén de medios
             if (!db.objectStoreNames.contains('media')) {
                 const mediaStore = db.createObjectStore('media', { keyPath: 'id', autoIncrement: true });
                 mediaStore.createIndex('userId', 'userId', { unique: false });
                 mediaStore.createIndex('timestamp', 'timestamp', { unique: false });
+            }
+
+            // Almacén de ubicaciones
+            if (!db.objectStoreNames.contains('locations')) {
+                const locationStore = db.createObjectStore('locations', { keyPath: 'country' });
+                locationStore.createIndex('cities', 'cities', { unique: false });
             }
         };
 
@@ -35,17 +44,17 @@ const initDB = () => {
     });
 };
 
-// PWA Service Worker Registration
+// Registro del Service Worker para PWA
 if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('service-worker.js')
-        .then(registration => console.log('ServiceWorker registered'))
-        .catch(error => console.log('ServiceWorker registration failed:', error));
+        .then(registration => console.log('ServiceWorker registrado'))
+        .catch(error => console.log('Error en registro de ServiceWorker:', error));
 }
 
-// Current user session
+// Sesión de usuario actual
 let currentUser = null;
 
-// DOM Elements
+// Elementos del DOM
 const authForms = document.getElementById('authForms');
 const mainApp = document.getElementById('mainApp');
 const loginForm = document.getElementById('loginForm');
@@ -54,18 +63,18 @@ const showRegisterBtn = document.getElementById('showRegister');
 const showLoginBtn = document.getElementById('showLogin');
 const helpButton = document.getElementById('helpButton');
 
-// Navigation Elements
+// Elementos de navegación
 const uploadNav = document.getElementById('uploadNav');
 const galleryNav = document.getElementById('galleryNav');
 const userManagementNav = document.getElementById('userManagementNav');
 const infoNav = document.getElementById('infoNav');
 const logoutBtn = document.getElementById('logoutBtn');
 
-// Content Sections
+// Secciones de contenido
 const sections = ['uploadSection', 'gallerySection', 'userManagementSection', 'infoSection']
     .reduce((acc, id) => ({ ...acc, [id]: document.getElementById(id) }), {});
 
-// Form Validation
+// Validación de formularios
 const validatePassword = (password) => {
     const regex = /^[A-Z][a-zA-Z]{5}[0-9]{4}[@#&]{2}$/;
     return regex.test(password);
@@ -75,7 +84,7 @@ const validateEmail = (email) => {
     return email.endsWith('@gmail.com');
 };
 
-// User Authentication
+// Autenticación de usuarios
 const registerUser = async (event) => {
     event.preventDefault();
     
@@ -92,12 +101,12 @@ const registerUser = async (event) => {
     };
 
     if (!validateEmail(formData.email)) {
-        alert('Please use a Gmail address');
+        alert('Por favor use una dirección de Gmail');
         return;
     }
 
     if (!validatePassword(formData.password)) {
-        alert('Password must follow the required format');
+        alert('La contraseña debe seguir el formato requerido');
         return;
     }
 
@@ -105,10 +114,10 @@ const registerUser = async (event) => {
         const transaction = db.transaction(['users'], 'readwrite');
         const store = transaction.objectStore('users');
         await store.add(formData);
-        alert('Registro exitoso ! Porvfavor, inicie la sesión.');
+        alert('¡Registro exitoso! Por favor inicie sesión.');
         showLoginForm();
     } catch (error) {
-        alert('Registro fallido: ' + error);
+        alert('Error en registro: ' + error);
     }
 };
 
@@ -127,14 +136,14 @@ const loginUser = async (event) => {
             currentUser = user;
             showMainApp();
         } else {
-            alert('Credenciales inválidos o la cuenta está bloqueada');
+            alert('Credenciales inválidas o cuenta bloqueada');
         }
     } catch (error) {
-        alert('Error al iniciar la sesión: ' + error);
+        alert('Error en inicio de sesión: ' + error);
     }
 };
 
-// UI Navigation
+// Navegación de la interfaz
 const showLoginForm = () => {
     loginForm.classList.remove('hidden');
     registerForm.classList.add('hidden');
@@ -159,7 +168,7 @@ const showSection = (sectionId) => {
     sections[sectionId].classList.remove('hidden');
 };
 
-// Media Handling
+// Manejo de medios
 const uploadMedia = async (event) => {
     event.preventDefault();
     
@@ -184,10 +193,10 @@ const uploadMedia = async (event) => {
         const transaction = db.transaction(['media'], 'readwrite');
         const store = transaction.objectStore('media');
         await store.add(mediaData);
-        alert('Archivo subido con éxito!');
+        alert('¡Subida exitosa!');
         loadGallery();
     } catch (error) {
-        alert('Fallo al subir el archivo!: ' + error);
+        alert('Error en subida: ' + error);
     }
 };
 
@@ -200,7 +209,7 @@ const fileToBase64 = (file) => {
     });
 };
 
-// WhatsApp Integration
+// Integración con WhatsApp
 const sendWhatsAppMessage = async (name, number, isInstructions) => {
     const message = isInstructions
         ? `Hola Sr. Desarrollador de mYpuB, el usuario ${name}, con el siguiente número de cuenta de WhatsApp ${number}, solicita instrucciones para crear una cuenta de acceso a mYpuB.\n\nDígnese en ayudarle con la ayuda solicitada, por favor.\n\nGracias!`
@@ -210,27 +219,219 @@ const sendWhatsAppMessage = async (name, number, isInstructions) => {
     window.open(`https://wa.me/${whatsappNumber}?text=${encodeURIComponent(message)}`);
 };
 
-// Event Listeners
+// Inicializar selección de ubicaciones
+const initializeCountrySelection = async () => {
+    try {
+        // Datos predefinidos de países, ciudades y calles
+        const predefinedLocations = {
+            'España': {
+                phoneCode: '+34',
+                cities: {
+                    'Madrid': ['Gran Vía', 'Paseo de la Castellana', 'Calle Alcalá'],
+                    'Barcelona': ['Las Ramblas', 'Paseo de Gracia', 'Avinguda Diagonal'],
+                    'Valencia': ['Calle Colón', 'Avenida del Puerto', 'Calle de la Paz']
+                }
+            },
+            'México': {
+                phoneCode: '+52',
+                cities: {
+                    'Ciudad de México': ['Paseo de la Reforma', 'Avenida Insurgentes', 'Calle Madero'],
+                    'Guadalajara': ['Avenida Vallarta', 'Calzada Independencia', 'Avenida Chapultepec'],
+                    'Monterrey': ['Avenida Constitución', 'Paseo de los Leones', 'Avenida Garza Sada']
+                }
+            },
+            'Colombia': {
+                phoneCode: '+57',
+                cities: {
+                    'Bogotá': ['Carrera 7', 'Avenida Jiménez', 'Calle 85'],
+                    'Medellín': ['Avenida Poblado', 'Carrera 70', 'Avenida Las Vegas'],
+                    'Cali': ['Avenida Sexta', 'Carrera 100', 'Avenida Colombia']
+                }
+            },
+            'Argentina': {
+                phoneCode: '+54',
+                cities: {
+                    'Buenos Aires': ['Avenida 9 de Julio', 'Avenida Corrientes', 'Calle Florida'],
+                    'Córdoba': ['Avenida Colón', 'Avenida Hipólito Yrigoyen', 'Boulevard San Juan'],
+                    'Rosario': ['Avenida Pellegrini', 'Boulevard Oroño', 'Calle San Martín']
+                }
+            }
+        };
+
+        // Cargar o inicializar datos en IndexedDB
+        const transaction = db.transaction(['locations'], 'readwrite');
+        const store = transaction.objectStore('locations');
+        
+        // Guardar cada país en la base de datos
+        for (const country in predefinedLocations) {
+            await store.put({
+                country: country,
+                phoneCode: predefinedLocations[country].phoneCode,
+                cities: predefinedLocations[country].cities
+            });
+        }
+
+        // Configurar select de países
+        const countrySelect = document.getElementById('country');
+        countrySelect.innerHTML = '';
+        
+        const countries = await store.getAll();
+        countries.sort((a, b) => a.country.localeCompare(b.country))
+            .forEach(countryData => {
+                const option = document.createElement('option');
+                option.value = countryData.country;
+                option.textContent = countryData.country;
+                option.dataset.phoneCode = countryData.phoneCode;
+                countrySelect.appendChild(option);
+            });
+
+        // Configurar eventos para cargar ciudades y calles
+        countrySelect.addEventListener('change', async function() {
+            const selectedCountry = this.value;
+            document.getElementById('phonePrefix').textContent = this.options[this.selectedIndex].dataset.phoneCode;
+            
+            const citySelect = document.getElementById('city');
+            citySelect.innerHTML = '<option value="">Seleccione una ciudad</option>';
+            citySelect.disabled = false;
+            
+            const streetSelect = document.getElementById('street');
+            streetSelect.innerHTML = '<option value="">Seleccione una calle</option>';
+            streetSelect.disabled = true;
+
+            if (selectedCountry) {
+                const countryData = await store.get(selectedCountry);
+                
+                // Llenar ciudades
+                for (const city in countryData.cities) {
+                    const option = document.createElement('option');
+                    option.value = city;
+                    option.textContent = city;
+                    citySelect.appendChild(option);
+                }
+            }
+        });
+
+        document.getElementById('city').addEventListener('change', async function() {
+            const selectedCountry = document.getElementById('country').value;
+            const selectedCity = this.value;
+            const streetSelect = document.getElementById('street');
+            streetSelect.innerHTML = '<option value="">Seleccione una calle</option>';
+            streetSelect.disabled = true;
+
+            if (selectedCountry && selectedCity) {
+                const countryData = await store.get(selectedCountry);
+                const streets = countryData.cities[selectedCity];
+                
+                // Llenar calles
+                streets.forEach(street => {
+                    const option = document.createElement('option');
+                    option.value = street;
+                    option.textContent = street;
+                    streetSelect.appendChild(option);
+                });
+                streetSelect.disabled = false;
+            }
+        });
+
+        // Botón para añadir nueva ubicación
+        document.getElementById('addLocationBtn').addEventListener('click', async function() {
+            const newCountry = prompt('Ingrese el nombre del nuevo país:');
+            if (newCountry) {
+                const phoneCode = prompt('Ingrese el código de teléfono para ' + newCountry + ' (ej. +34):');
+                
+                if (phoneCode) {
+                    await store.put({
+                        country: newCountry,
+                        phoneCode: phoneCode,
+                        cities: {}
+                    });
+                    
+                    // Actualizar lista de países
+                    initializeCountrySelection();
+                    alert(`País ${newCountry} añadido exitosamente!`);
+                }
+            }
+        });
+
+        // Botón para añadir nueva ciudad (solo para desarrolladores)
+        document.getElementById('addCityBtn').addEventListener('click', async function() {
+            if (!currentUser || !currentUser.isDeveloper) {
+                alert('Solo los desarrolladores pueden añadir ciudades');
+                return;
+            }
+            
+            const selectedCountry = document.getElementById('country').value;
+            if (!selectedCountry) {
+                alert('Seleccione un país primero');
+                return;
+            }
+            
+            const newCity = prompt('Ingrese el nombre de la nueva ciudad para ' + selectedCountry + ':');
+            if (newCity) {
+                const countryData = await store.get(selectedCountry);
+                countryData.cities[newCity] = ['Calle Principal'];
+                await store.put(countryData);
+                
+                // Actualizar lista de ciudades
+                document.getElementById('country').dispatchEvent(new Event('change'));
+                alert(`Ciudad ${newCity} añadida exitosamente!`);
+            }
+        });
+
+        // Botón para añadir nueva calle (solo para desarrolladores)
+        document.getElementById('addStreetBtn').addEventListener('click', async function() {
+            if (!currentUser || !currentUser.isDeveloper) {
+                alert('Solo los desarrolladores pueden añadir calles');
+                return;
+            }
+            
+            const selectedCountry = document.getElementById('country').value;
+            const selectedCity = document.getElementById('city').value;
+            
+            if (!selectedCountry || !selectedCity) {
+                alert('Seleccione un país y una ciudad primero');
+                return;
+            }
+            
+            const newStreet = prompt('Ingrese el nombre de la nueva calle para ' + selectedCity + ', ' + selectedCountry + ':');
+            if (newStreet) {
+                const countryData = await store.get(selectedCountry);
+                countryData.cities[selectedCity].push(newStreet);
+                await store.put(countryData);
+                
+                // Actualizar lista de calles
+                document.getElementById('city').dispatchEvent(new Event('change'));
+                alert(`Calle ${newStreet} añadida exitosamente!`);
+            }
+        });
+
+    } catch (error) {
+        console.error('Error al cargar ubicaciones:', error);
+    }
+};
+
+// Event listeners
 document.addEventListener('DOMContentLoaded', async () => {
     try {
         await initDB();
+        await initializeCountrySelection();
         
-        // Auth navigation
+        // Navegación de autenticación
         showRegisterBtn.addEventListener('click', showRegisterForm);
         showLoginBtn.addEventListener('click', showLoginForm);
         
-        // Form submissions
+        // Envío de formularios
         document.getElementById('register').addEventListener('submit', registerUser);
         document.getElementById('login').addEventListener('submit', loginUser);
         document.getElementById('uploadForm').addEventListener('submit', uploadMedia);
         
-        // Main navigation
+        // Navegación principal
         uploadNav.addEventListener('click', () => showSection('uploadSection'));
         galleryNav.addEventListener('click', () => showSection('gallerySection'));
         userManagementNav.addEventListener('click', () => showSection('userManagementSection'));
         infoNav.addEventListener('click', () => showSection('infoSection'));
         
-        // WhatsApp help
+        // Ayuda de WhatsApp
         helpButton.addEventListener('click', () => {
             const helpModal = new bootstrap.Modal(document.getElementById('helpModal'));
             helpModal.show();
@@ -238,7 +439,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         
         document.getElementById('whatsappInstructions').addEventListener('click', () => {
             const whatsappModal = new bootstrap.Modal(document.getElementById('whatsappModal'));
-            document.getElementById('whatsappModalTitle').textContent = 'Get Instructions';
+            document.getElementById('whatsappModalTitle').textContent = 'Obtener instrucciones';
             document.getElementById('whatsappForm').onsubmit = (e) => {
                 e.preventDefault();
                 const name = document.getElementById('whatsappName').value;
@@ -251,7 +452,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         
         document.getElementById('whatsappConsultation').addEventListener('click', () => {
             const whatsappModal = new bootstrap.Modal(document.getElementById('whatsappModal'));
-            document.getElementById('whatsappModalTitle').textContent = 'Request Consultation';
+            document.getElementById('whatsappModalTitle').textContent = 'Solicitar consulta';
             document.getElementById('whatsappForm').onsubmit = (e) => {
                 e.preventDefault();
                 const name = document.getElementById('whatsappName').value;
@@ -269,11 +470,11 @@ document.addEventListener('DOMContentLoaded', async () => {
             showLoginForm();
         });
     } catch (error) {
-        console.error('Initialization failed:', error);
+        console.error('Error en inicialización:', error);
     }
 });
 
-// Gallery Functions
+// Funciones de la galería
 const loadGallery = async () => {
     try {
         const transaction = db.transaction(['media'], 'readonly');
@@ -293,7 +494,7 @@ const loadGallery = async () => {
             }
         };
     } catch (error) {
-        console.error('Failed to load gallery:', error);
+        console.error('Error al cargar galería:', error);
     }
 };
 
@@ -311,8 +512,8 @@ const createMediaCard = (media) => {
     const cardBody = document.createElement('div');
     cardBody.className = 'card-body';
     cardBody.innerHTML = `
-        <p>Uploaded by: ${media.userId}</p>
-        <p>Date: ${new Date(media.timestamp).toLocaleString()}</p>
+        <p>Subido por: ${media.userId}</p>
+        <p>Fecha: ${new Date(media.timestamp).toLocaleString()}</p>
         <div class="btn-group">
             <button class="btn btn-sm btn-outline-primary like-btn">👍 ${media.likes}</button>
             <button class="btn btn-sm btn-outline-danger dislike-btn">👎 ${media.dislikes}</button>
@@ -322,7 +523,7 @@ const createMediaCard = (media) => {
     if (currentUser.email === media.userId || currentUser.isDeveloper) {
         const deleteBtn = document.createElement('button');
         deleteBtn.className = 'btn btn-sm btn-danger ms-2';
-        deleteBtn.textContent = 'Delete';
+        deleteBtn.textContent = 'Eliminar';
         deleteBtn.onclick = () => deleteMedia(media.id);
         cardBody.appendChild(deleteBtn);
     }
@@ -350,7 +551,7 @@ const createVideoElement = (data) => {
 };
 
 const deleteMedia = async (mediaId) => {
-    if (!confirm('Estás seguro que quieres eliminar este elemento?')) return;
+    if (!confirm('¿Está seguro que desea eliminar este medio?')) return;
     
     try {
         const transaction = db.transaction(['media'], 'readwrite');
@@ -358,11 +559,11 @@ const deleteMedia = async (mediaId) => {
         await store.delete(mediaId);
         loadGallery();
     } catch (error) {
-        alert('Error al eliminar elemento: ' + error);
+        alert('Error al eliminar medio: ' + error);
     }
 };
 
-// User Management Functions
+// Funciones de gestión de usuarios
 const loadUserManagement = async () => {
     if (!currentUser.isDeveloper) return;
     
@@ -382,7 +583,7 @@ const loadUserManagement = async () => {
             }
         };
     } catch (error) {
-        console.error('Failed to load user management:', error);
+        console.error('Error al cargar gestión de usuarios:', error);
     }
 };
 
@@ -399,7 +600,7 @@ const createUserListItem = (user) => {
             <div>
                 <button class="btn btn-sm ${user.isBlocked ? 'btn-success' : 'btn-danger'}"
                         onclick="toggleUserBlock('${user.email}')">
-                    ${user.isBlocked ? 'Unblock' : 'Block'}
+                    ${user.isBlocked ? 'Desbloquear' : 'Bloquear'}
                 </button>
             </div>
         </div>
@@ -416,38 +617,7 @@ const toggleUserBlock = async (email) => {
         await store.put(user);
         loadUserManagement();
     } catch (error) {
-        alert('Failed to toggle user block status: ' + error);
+        alert('Error al cambiar estado de bloqueo: ' + error);
     }
 };
-
-// Initialize country selection with the Countries API
-const initializeCountrySelection = async () => {
-    try {
-        const response = await fetch('https://restcountries.com/v3.1/all');
-        const countries = await response.json();
-        
-        const countrySelect = document.getElementById('country');
-        countries
-            .sort((a, b) => a.name.common.localeCompare(b.name.common))
-            .forEach(country => {
-                const option = document.createElement('option');
-                option.value = country.name.common;
-                option.textContent = country.name.common;
-                option.dataset.phoneCode = country.idd?.root + (country.idd?.suffixes?.[0] || '');
-                countrySelect.appendChild(option);
-            });
-
-        countrySelect.addEventListener('change', function() {
-            const selectedOption = this.options[this.selectedIndex];
-            document.getElementById('phonePrefix').textContent = selectedOption.dataset.phoneCode || '+';
-            // Here you would typically call an API to get cities for the selected country
-            // For demonstration, we'll enable the city select
-            document.getElementById('city').disabled = false;
-        });
-    } catch (error) {
-        console.error('Failed to load countries:', error);
-    }
-};
-
-// Call initialization function when document loads
-document.addEventListener('DOMContentLoaded', initializeCountrySelection);
+```
