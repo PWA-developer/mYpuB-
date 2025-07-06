@@ -226,15 +226,87 @@ const sendWhatsAppMessage = async (name, number, isInstructions) => {
     window.open(`https://wa.me/${whatsappNumber}?text=${encodeURIComponent(message)}`);
 };
 
-// Inicializar selección de ubicaciones con JComboBox jerárquicos
+// Función para cargar países en el JComboBox
+const loadCountries = async () => {
+    try {
+        const transaction = db.transaction(['locations'], 'readonly');
+        const store = transaction.objectStore('locations');
+        const countries = await store.getAll();
+        
+        const countrySelect = document.getElementById('country');
+        countrySelect.innerHTML = '<option value="">Seleccione un país</option>';
+        
+        countries.forEach(country => {
+            const option = document.createElement('option');
+            option.value = country.country;
+            option.textContent = country.country;
+            option.dataset.phoneCode = country.phoneCode;
+            countrySelect.appendChild(option);
+        });
+
+        return countries;
+    } catch (error) {
+        console.error('Error al cargar países:', error);
+        return [];
+    }
+};
+
+// Función para cargar ciudades basadas en el país seleccionado
+const loadCities = async (country) => {
+    try {
+        const transaction = db.transaction(['locations'], 'readonly');
+        const store = transaction.objectStore('locations');
+        const countryData = await store.get(country);
+        
+        const citySelect = document.getElementById('city');
+        citySelect.innerHTML = '<option value="">Seleccione una ciudad</option>';
+        
+        if (countryData && countryData.cities) {
+            for (const city in countryData.cities) {
+                const option = document.createElement('option');
+                option.value = city;
+                option.textContent = city;
+                citySelect.appendChild(option);
+            }
+        }
+    } catch (error) {
+        console.error('Error al cargar ciudades:', error);
+    }
+};
+
+// Función para cargar calles basadas en la ciudad seleccionada
+const loadStreets = async (country, city) => {
+    try {
+        const transaction = db.transaction(['locations'], 'readonly');
+        const store = transaction.objectStore('locations');
+        const countryData = await store.get(country);
+        
+        const streetSelect = document.getElementById('street');
+        streetSelect.innerHTML = '<option value="">Seleccione una calle</option>';
+        
+        if (countryData && countryData.cities && countryData.cities[city]) {
+            countryData.cities[city].forEach(street => {
+                const option = document.createElement('option');
+                option.value = street;
+                option.textContent = street;
+                streetSelect.appendChild(option);
+            });
+        }
+    } catch (error) {
+        console.error('Error al cargar calles:', error);
+    }
+};
+
+// Inicializar selección de ubicaciones
 const initializeCountrySelection = async () => {
     try {
         const transaction = db.transaction(['locations'], 'readwrite');
         const store = transaction.objectStore('locations');
         
-        // Datos iniciales si no existen
+        // Verificar si ya existen datos
         const count = await store.count();
         if (count === 0) {
+            // Datos iniciales
             const initialData = [
                 {
                     country: 'España',
@@ -264,71 +336,45 @@ const initializeCountrySelection = async () => {
                     }
                 }
             ];
-            
+
+            // Insertar datos iniciales
             for (const data of initialData) {
                 await store.add(data);
             }
         }
 
-        // Configurar JComboBox de países
-        const countrySelect = document.getElementById('country');
-        countrySelect.innerHTML = '<option value="">Seleccione un país</option>';
-        
-        const countries = await store.getAll();
-        countries.forEach(country => {
-            const option = document.createElement('option');
-            option.value = country.country;
-            option.textContent = country.country;
-            option.dataset.phoneCode = country.phoneCode;
-            countrySelect.appendChild(option);
-        });
+        // Cargar países inicialmente
+        await loadCountries();
 
-        // Configurar eventos para JComboBox jerárquicos
-        countrySelect.addEventListener('change', async function() {
+        // Configurar eventos para los JComboBox
+        document.getElementById('country').addEventListener('change', async function() {
             const selectedCountry = this.value;
-            const citySelect = document.getElementById('city');
-            citySelect.innerHTML = '<option value="">Seleccione una ciudad</option>';
-            citySelect.disabled = !selectedCountry;
+            document.getElementById('city').disabled = !selectedCountry;
+            document.getElementById('street').disabled = true;
             
-            const streetSelect = document.getElementById('street');
-            streetSelect.innerHTML = '<option value="">Seleccione una calle</option>';
-            streetSelect.disabled = true;
-
             if (selectedCountry) {
                 document.getElementById('phonePrefix').textContent = this.options[this.selectedIndex].dataset.phoneCode;
-                
-                const countryData = await store.get(selectedCountry);
-                for (const city in countryData.cities) {
-                    const option = document.createElement('option');
-                    option.value = city;
-                    option.textContent = city;
-                    citySelect.appendChild(option);
-                }
+                await loadCities(selectedCountry);
+            } else {
+                document.getElementById('city').innerHTML = '<option value="">Seleccione una ciudad</option>';
+                document.getElementById('street').innerHTML = '<option value="">Seleccione una calle</option>';
             }
         });
 
         document.getElementById('city').addEventListener('change', async function() {
             const selectedCountry = document.getElementById('country').value;
             const selectedCity = this.value;
-            const streetSelect = document.getElementById('street');
-            streetSelect.innerHTML = '<option value="">Seleccione una calle</option>';
-            streetSelect.disabled = !selectedCity;
-
+            document.getElementById('street').disabled = !selectedCity;
+            
             if (selectedCountry && selectedCity) {
-                const countryData = await store.get(selectedCountry);
-                const streets = countryData.cities[selectedCity] || [];
-                
-                streets.forEach(street => {
-                    const option = document.createElement('option');
-                    option.value = street;
-                    option.textContent = street;
-                    streetSelect.appendChild(option);
-                });
+                await loadStreets(selectedCountry, selectedCity);
+            } else {
+                document.getElementById('street').innerHTML = '<option value="">Seleccione una calle</option>';
             }
         });
 
     } catch (error) {
-        console.error('Error al cargar ubicaciones:', error);
+        console.error('Error al inicializar ubicaciones:', error);
     }
 };
 
@@ -549,3 +595,6 @@ const toggleUserBlock = async (email) => {
         alert('Error al cambiar estado de bloqueo: ' + error);
     }
 };
+
+
+ 
