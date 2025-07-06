@@ -1,6 +1,4 @@
 
-
-```javascript
 // Configuración de IndexedDB
 const dbName = 'mYpuBDB';
 const dbVersion = 1;
@@ -28,12 +26,6 @@ const initDB = () => {
                 const mediaStore = db.createObjectStore('media', { keyPath: 'id', autoIncrement: true });
                 mediaStore.createIndex('userId', 'userId', { unique: false });
                 mediaStore.createIndex('timestamp', 'timestamp', { unique: false });
-            }
-
-            // Almacén de ubicaciones
-            if (!db.objectStoreNames.contains('locations')) {
-                const locationStore = db.createObjectStore('locations', { keyPath: 'country' });
-                locationStore.createIndex('cities', 'cities', { unique: false });
             }
         };
 
@@ -219,74 +211,99 @@ const sendWhatsAppMessage = async (name, number, isInstructions) => {
     window.open(`https://wa.me/${whatsappNumber}?text=${encodeURIComponent(message)}`);
 };
 
-// Inicializar selección de ubicaciones
+// Inicializar selección de ubicaciones con datos predefinidos
 const initializeCountrySelection = async () => {
     try {
         // Datos predefinidos de países, ciudades y calles
-        const predefinedLocations = {
-            'España': {
+        const predefinedLocations = [
+            {
+                country: 'España',
                 phoneCode: '+34',
-                cities: {
-                    'Madrid': ['Gran Vía', 'Paseo de la Castellana', 'Calle Alcalá'],
-                    'Barcelona': ['Las Ramblas', 'Paseo de Gracia', 'Avinguda Diagonal'],
-                    'Valencia': ['Calle Colón', 'Avenida del Puerto', 'Calle de la Paz']
-                }
+                cities: [
+                    {
+                        name: 'Madrid',
+                        streets: ['Gran Vía', 'Paseo de la Castellana', 'Calle Alcalá']
+                    },
+                    {
+                        name: 'Barcelona',
+                        streets: ['Las Ramblas', 'Paseo de Gracia', 'Avinguda Diagonal']
+                    },
+                    {
+                        name: 'Valencia',
+                        streets: ['Calle Colón', 'Avenida del Puerto', 'Calle de la Paz']
+                    }
+                ]
             },
-            'México': {
+            {
+                country: 'México',
                 phoneCode: '+52',
-                cities: {
-                    'Ciudad de México': ['Paseo de la Reforma', 'Avenida Insurgentes', 'Calle Madero'],
-                    'Guadalajara': ['Avenida Vallarta', 'Calzada Independencia', 'Avenida Chapultepec'],
-                    'Monterrey': ['Avenida Constitución', 'Paseo de los Leones', 'Avenida Garza Sada']
-                }
+                cities: [
+                    {
+                        name: 'Ciudad de México',
+                        streets: ['Paseo de la Reforma', 'Avenida Insurgentes', 'Calle Madero']
+                    },
+                    {
+                        name: 'Guadalajara',
+                        streets: ['Avenida Vallarta', 'Calzada Independencia', 'Avenida Chapultepec']
+                    },
+                    {
+                        name: 'Monterrey',
+                        streets: ['Avenida Constitución', 'Paseo de los Leones', 'Avenida Garza Sada']
+                    }
+                ]
             },
-            'Colombia': {
+            {
+                country: 'Colombia',
                 phoneCode: '+57',
-                cities: {
-                    'Bogotá': ['Carrera 7', 'Avenida Jiménez', 'Calle 85'],
-                    'Medellín': ['Avenida Poblado', 'Carrera 70', 'Avenida Las Vegas'],
-                    'Cali': ['Avenida Sexta', 'Carrera 100', 'Avenida Colombia']
-                }
+                cities: [
+                    {
+                        name: 'Bogotá',
+                        streets: ['Carrera 7', 'Avenida Jiménez', 'Calle 85']
+                    },
+                    {
+                        name: 'Medellín',
+                        streets: ['Avenida Poblado', 'Carrera 70', 'Avenida Las Vegas']
+                    },
+                    {
+                        name: 'Cali',
+                        streets: ['Avenida Sexta', 'Carrera 100', 'Avenida Colombia']
+                    }
+                ]
             },
-            'Argentina': {
+            {
+                country: 'Argentina',
                 phoneCode: '+54',
-                cities: {
-                    'Buenos Aires': ['Avenida 9 de Julio', 'Avenida Corrientes', 'Calle Florida'],
-                    'Córdoba': ['Avenida Colón', 'Avenida Hipólito Yrigoyen', 'Boulevard San Juan'],
-                    'Rosario': ['Avenida Pellegrini', 'Boulevard Oroño', 'Calle San Martín']
-                }
+                cities: [
+                    {
+                        name: 'Buenos Aires',
+                        streets: ['Avenida 9 de Julio', 'Avenida Corrientes', 'Calle Florida']
+                    },
+                    {
+                        name: 'Córdoba',
+                        streets: ['Avenida Colón', 'Avenida Hipólito Yrigoyen', 'Boulevard San Juan']
+                    },
+                    {
+                        name: 'Rosario',
+                        streets: ['Avenida Pellegrini', 'Boulevard Oroño', 'Calle San Martín']
+                    }
+                ]
             }
-        };
-
-        // Cargar o inicializar datos en IndexedDB
-        const transaction = db.transaction(['locations'], 'readwrite');
-        const store = transaction.objectStore('locations');
-        
-        // Guardar cada país en la base de datos
-        for (const country in predefinedLocations) {
-            await store.put({
-                country: country,
-                phoneCode: predefinedLocations[country].phoneCode,
-                cities: predefinedLocations[country].cities
-            });
-        }
+        ];
 
         // Configurar select de países
         const countrySelect = document.getElementById('country');
-        countrySelect.innerHTML = '';
+        countrySelect.innerHTML = '<option value="">Seleccione un país</option>';
         
-        const countries = await store.getAll();
-        countries.sort((a, b) => a.country.localeCompare(b.country))
-            .forEach(countryData => {
-                const option = document.createElement('option');
-                option.value = countryData.country;
-                option.textContent = countryData.country;
-                option.dataset.phoneCode = countryData.phoneCode;
-                countrySelect.appendChild(option);
-            });
+        predefinedLocations.forEach(country => {
+            const option = document.createElement('option');
+            option.value = country.country;
+            option.textContent = country.country;
+            option.dataset.phoneCode = country.phoneCode;
+            countrySelect.appendChild(option);
+        });
 
         // Configurar eventos para cargar ciudades y calles
-        countrySelect.addEventListener('change', async function() {
+        countrySelect.addEventListener('change', function() {
             const selectedCountry = this.value;
             document.getElementById('phonePrefix').textContent = this.options[this.selectedIndex].dataset.phoneCode;
             
@@ -299,19 +316,19 @@ const initializeCountrySelection = async () => {
             streetSelect.disabled = true;
 
             if (selectedCountry) {
-                const countryData = await store.get(selectedCountry);
+                const countryData = predefinedLocations.find(c => c.country === selectedCountry);
                 
                 // Llenar ciudades
-                for (const city in countryData.cities) {
+                countryData.cities.forEach(city => {
                     const option = document.createElement('option');
-                    option.value = city;
-                    option.textContent = city;
+                    option.value = city.name;
+                    option.textContent = city.name;
                     citySelect.appendChild(option);
-                }
+                });
             }
         });
 
-        document.getElementById('city').addEventListener('change', async function() {
+        document.getElementById('city').addEventListener('change', function() {
             const selectedCountry = document.getElementById('country').value;
             const selectedCity = this.value;
             const streetSelect = document.getElementById('street');
@@ -319,89 +336,17 @@ const initializeCountrySelection = async () => {
             streetSelect.disabled = true;
 
             if (selectedCountry && selectedCity) {
-                const countryData = await store.get(selectedCountry);
-                const streets = countryData.cities[selectedCity];
+                const countryData = predefinedLocations.find(c => c.country === selectedCountry);
+                const cityData = countryData.cities.find(c => c.name === selectedCity);
                 
                 // Llenar calles
-                streets.forEach(street => {
+                cityData.streets.forEach(street => {
                     const option = document.createElement('option');
                     option.value = street;
                     option.textContent = street;
                     streetSelect.appendChild(option);
                 });
                 streetSelect.disabled = false;
-            }
-        });
-
-        // Botón para añadir nueva ubicación
-        document.getElementById('addLocationBtn').addEventListener('click', async function() {
-            const newCountry = prompt('Ingrese el nombre del nuevo país:');
-            if (newCountry) {
-                const phoneCode = prompt('Ingrese el código de teléfono para ' + newCountry + ' (ej. +34):');
-                
-                if (phoneCode) {
-                    await store.put({
-                        country: newCountry,
-                        phoneCode: phoneCode,
-                        cities: {}
-                    });
-                    
-                    // Actualizar lista de países
-                    initializeCountrySelection();
-                    alert(`País ${newCountry} añadido exitosamente!`);
-                }
-            }
-        });
-
-        // Botón para añadir nueva ciudad (solo para desarrolladores)
-        document.getElementById('addCityBtn').addEventListener('click', async function() {
-            if (!currentUser || !currentUser.isDeveloper) {
-                alert('Solo los desarrolladores pueden añadir ciudades');
-                return;
-            }
-            
-            const selectedCountry = document.getElementById('country').value;
-            if (!selectedCountry) {
-                alert('Seleccione un país primero');
-                return;
-            }
-            
-            const newCity = prompt('Ingrese el nombre de la nueva ciudad para ' + selectedCountry + ':');
-            if (newCity) {
-                const countryData = await store.get(selectedCountry);
-                countryData.cities[newCity] = ['Calle Principal'];
-                await store.put(countryData);
-                
-                // Actualizar lista de ciudades
-                document.getElementById('country').dispatchEvent(new Event('change'));
-                alert(`Ciudad ${newCity} añadida exitosamente!`);
-            }
-        });
-
-        // Botón para añadir nueva calle (solo para desarrolladores)
-        document.getElementById('addStreetBtn').addEventListener('click', async function() {
-            if (!currentUser || !currentUser.isDeveloper) {
-                alert('Solo los desarrolladores pueden añadir calles');
-                return;
-            }
-            
-            const selectedCountry = document.getElementById('country').value;
-            const selectedCity = document.getElementById('city').value;
-            
-            if (!selectedCountry || !selectedCity) {
-                alert('Seleccione un país y una ciudad primero');
-                return;
-            }
-            
-            const newStreet = prompt('Ingrese el nombre de la nueva calle para ' + selectedCity + ', ' + selectedCountry + ':');
-            if (newStreet) {
-                const countryData = await store.get(selectedCountry);
-                countryData.cities[selectedCity].push(newStreet);
-                await store.put(countryData);
-                
-                // Actualizar lista de calles
-                document.getElementById('city').dispatchEvent(new Event('change'));
-                alert(`Calle ${newStreet} añadida exitosamente!`);
             }
         });
 
@@ -620,4 +565,5 @@ const toggleUserBlock = async (email) => {
         alert('Error al cambiar estado de bloqueo: ' + error);
     }
 };
-```
+
+
