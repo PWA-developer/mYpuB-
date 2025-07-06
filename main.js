@@ -1,7 +1,7 @@
 
 // Configuración de IndexedDB
 const dbName = 'mYpuBDB';
-const dbVersion = 1;
+const dbVersion = 2; // Versión incrementada por el nuevo almacén
 let db;
 
 // Inicializar IndexedDB
@@ -28,7 +28,7 @@ const initDB = () => {
                 mediaStore.createIndex('timestamp', 'timestamp', { unique: false });
             }
 
-            // Almacén de ubicaciones
+            // Nuevo almacén para ubicaciones
             if (!db.objectStoreNames.contains('locations')) {
                 const locationStore = db.createObjectStore('locations', { keyPath: 'country' });
                 locationStore.createIndex('cities', 'cities', { unique: false });
@@ -86,11 +86,20 @@ const validateEmail = (email) => {
 const registerUser = async (event) => {
     event.preventDefault();
     
+    const country = document.getElementById('country').value;
+    const city = document.getElementById('city').value;
+    const street = document.getElementById('street').value;
+
+    if (!country || !city || !street) {
+        alert('Debe seleccionar país, ciudad y calle para registrarse');
+        return;
+    }
+
     const formData = {
         fullName: document.getElementById('fullName').value,
-        country: document.getElementById('country').value,
-        city: document.getElementById('city').value,
-        street: document.getElementById('street').value,
+        country: country,
+        city: city,
+        street: street,
         phone: document.getElementById('phonePrefix').textContent + document.getElementById('phone').value,
         email: document.getElementById('registerEmail').value,
         password: document.getElementById('registerPassword').value,
@@ -217,7 +226,7 @@ const sendWhatsAppMessage = async (name, number, isInstructions) => {
     window.open(`https://wa.me/${whatsappNumber}?text=${encodeURIComponent(message)}`);
 };
 
-// Inicializar selección de ubicaciones con lista editable
+// Inicializar selección de ubicaciones con JComboBox jerárquicos
 const initializeCountrySelection = async () => {
     try {
         const transaction = db.transaction(['locations'], 'readwrite');
@@ -231,16 +240,27 @@ const initializeCountrySelection = async () => {
                     country: 'España',
                     phoneCode: '+34',
                     cities: {
-                        'Madrid': ['Gran Vía', 'Paseo de la Castellana'],
-                        'Barcelona': ['Las Ramblas', 'Paseo de Gracia']
+                        'Madrid': ['Gran Vía', 'Paseo de la Castellana', 'Calle Alcalá'],
+                        'Barcelona': ['Las Ramblas', 'Paseo de Gracia', 'Avinguda Diagonal'],
+                        'Valencia': ['Calle Colón', 'Avenida del Puerto', 'Calle de la Paz']
                     }
                 },
                 {
                     country: 'México',
                     phoneCode: '+52',
                     cities: {
-                        'Ciudad de México': ['Paseo de la Reforma', 'Avenida Insurgentes'],
-                        'Guadalajara': ['Avenida Vallarta', 'Calzada Independencia']
+                        'Ciudad de México': ['Paseo de la Reforma', 'Avenida Insurgentes', 'Calle Madero'],
+                        'Guadalajara': ['Avenida Vallarta', 'Calzada Independencia', 'Avenida Chapultepec'],
+                        'Monterrey': ['Avenida Constitución', 'Paseo de los Leones', 'Avenida Garza Sada']
+                    }
+                },
+                {
+                    country: 'Colombia',
+                    phoneCode: '+57',
+                    cities: {
+                        'Bogotá': ['Carrera 7', 'Avenida Jiménez', 'Calle 85'],
+                        'Medellín': ['Avenida Poblado', 'Carrera 70', 'Avenida Las Vegas'],
+                        'Cali': ['Avenida Sexta', 'Carrera 100', 'Avenida Colombia']
                     }
                 }
             ];
@@ -250,7 +270,7 @@ const initializeCountrySelection = async () => {
             }
         }
 
-        // Cargar países
+        // Configurar JComboBox de países
         const countrySelect = document.getElementById('country');
         countrySelect.innerHTML = '<option value="">Seleccione un país</option>';
         
@@ -263,7 +283,7 @@ const initializeCountrySelection = async () => {
             countrySelect.appendChild(option);
         });
 
-        // Configurar eventos
+        // Configurar eventos para JComboBox jerárquicos
         countrySelect.addEventListener('change', async function() {
             const selectedCountry = this.value;
             const citySelect = document.getElementById('city');
@@ -307,62 +327,6 @@ const initializeCountrySelection = async () => {
             }
         });
 
-        // Funciones para añadir nuevas ubicaciones
-        document.getElementById('addCountryBtn').addEventListener('click', async () => {
-            const country = prompt('Ingrese el nombre del país:');
-            if (country) {
-                const phoneCode = prompt('Ingrese el código telefónico (ej. +34):');
-                if (phoneCode) {
-                    await store.add({
-                        country,
-                        phoneCode,
-                        cities: {}
-                    });
-                    alert('País añadido correctamente');
-                    initializeCountrySelection();
-                }
-            }
-        });
-
-        document.getElementById('addCityBtn').addEventListener('click', async () => {
-            const country = document.getElementById('country').value;
-            if (!country) {
-                alert('Seleccione un país primero');
-                return;
-            }
-            
-            const city = prompt('Ingrese el nombre de la ciudad:');
-            if (city) {
-                const countryData = await store.get(country);
-                countryData.cities[city] = [];
-                await store.put(countryData);
-                alert('Ciudad añadida correctamente');
-                document.getElementById('country').dispatchEvent(new Event('change'));
-            }
-        });
-
-        document.getElementById('addStreetBtn').addEventListener('click', async () => {
-            const country = document.getElementById('country').value;
-            const city = document.getElementById('city').value;
-            
-            if (!country || !city) {
-                alert('Seleccione un país y una ciudad primero');
-                return;
-            }
-            
-            const street = prompt('Ingrese el nombre de la calle:');
-            if (street) {
-                const countryData = await store.get(country);
-                if (!countryData.cities[city]) {
-                    countryData.cities[city] = [];
-                }
-                countryData.cities[city].push(street);
-                await store.put(countryData);
-                alert('Calle añadida correctamente');
-                document.getElementById('city').dispatchEvent(new Event('change'));
-            }
-        });
-
     } catch (error) {
         console.error('Error al cargar ubicaciones:', error);
     }
@@ -372,8 +336,9 @@ const initializeCountrySelection = async () => {
 document.addEventListener('DOMContentLoaded', async () => {
     try {
         await initDB();
+        await initializeCountrySelection();
         
-        // Reparación del botón de registro
+        // Navegación de autenticación
         showRegisterBtn.addEventListener('click', (e) => {
             e.preventDefault();
             showRegisterForm();
@@ -433,8 +398,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             authForms.classList.remove('hidden');
             showLoginForm();
         });
-
-        await initializeCountrySelection();
     } catch (error) {
         console.error('Error en inicialización:', error);
     }
